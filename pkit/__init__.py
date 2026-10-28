@@ -1,8 +1,7 @@
 """pkit — работа со схемами P-CAD 2002 (.SCH) через DBX API.
 
-    import os, sys
-    sys.path.insert(0, os.environ.get("PKIT_HOME",
-        r"C:\\Users\\***-sp\\Desktop\\Pcad-Kit"))
+    import sys
+    sys.path.insert(0, r"<корень набора>")   # папка SKILL.md
     import pkit as pk
 
     pk.utf8_console()

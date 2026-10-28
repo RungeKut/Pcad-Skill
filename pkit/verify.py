@@ -1,7 +1,7 @@
-"""pkit.verify — накопитель проверок (как ak.Report в Allegro-Kit).
+"""pkit.verify — накопитель проверок (как ak.Report в Allegro-Skill).
 
     r = pk.Report("схема блока")
-    r.equal(len(s.comps), 205, "число компонентов")
+    r.equal(len(s.comps), 120, "число компонентов")
     r.truth("GND" in s.nets, "цепь GND на месте")
     r.done()   # печатает итог и падает, если были провалы
 """

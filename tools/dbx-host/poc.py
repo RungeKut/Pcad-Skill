@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # POC: поднять Sch.exe с копией схемы и выгрузить данные через DbxHost.
+#   python tools/dbx-host/poc.py <схема.SCH>
 import json
 import os
 import shutil
@@ -9,7 +10,6 @@ import time
 
 SCH_EXE = r"C:\Program Files (x86)\PCAD2002\Sch.exe"
 HOST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "DbxHost.exe")
-SRC = r"Y:\#33_***\#06 Схема блока\Радиотестер схема блока_1.SCH"
 WORK = os.path.join(os.environ["LOCALAPPDATA"], "Temp", "pkit_poc")
 
 
@@ -32,10 +32,10 @@ class Host:
         return resp.get("data")
 
 
-def main():
+def main(src):
     os.makedirs(WORK, exist_ok=True)
     dst = os.path.join(WORK, "in.sch")
-    shutil.copyfile(SRC, dst)
+    shutil.copyfile(src, dst)
     print("копия:", dst, os.path.getsize(dst), "байт")
 
     sch = subprocess.Popen([SCH_EXE, dst])
@@ -75,8 +75,11 @@ def main():
 
 
 if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("python tools/dbx-host/poc.py <схема.SCH>")
+        sys.exit(2)
     try:
-        main()
+        main(sys.argv[1])
     except Exception as e:
         print("POC FAIL:", e)
         sys.exit(1)
