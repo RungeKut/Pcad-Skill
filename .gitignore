@@ -1,5 +1,10 @@
 __pycache__/
-*.pyc
+*.py[cod]
+tools/stoplist.txt
+local/
 tests/vyvod/
 tools/dbx-host/DbxHost.exe
 .quota-resume.md
+*.log
+*.bak
+Thumbs.db

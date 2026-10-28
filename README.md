@@ -1,18 +1,26 @@
-# Pcad-Kit — схемы P-CAD 2002 скриптами
+# Pcad-Skill — схемы P-CAD 2002 скриптами
 
 Чтение и правка схем P-CAD 2002 (.SCH) из Python через штатный DBX API
-редактора — без ручной работы в Sch.exe. По образцу Allegro-Kit (Cadence).
+редактора — без ручной работы в Sch.exe. По образцу Allegro-Skill (Cadence).
 
 ```
-Pcad-Kit/
-├── skill/SKILL.md          — скилл Kimi Code (junction ~/.kimi-code/skills/pcad)
+pcad/
+├── SKILL.md                — скилл агента: что это, первый шаг, железные правила
 ├── pkit/                   — Python-пакет: env / dbx / sch / verify
 ├── tools/dbx-host/         — DbxHost.cs → DbxHost.exe (x86, JSON stdin/stdout)
+├── tools/check_docs.py     — обёртка общей проверки skill-skill
+├── tools/kit_local.py      — особое набора для этой проверки
 ├── knowledge/              — база проверенного опытом знания (INDEX.md)
-├── tests/                  — сквозные тесты (python tests\test_*.py)
-├── tools/setup.ps1         — установка: junction + PKIT_HOME + сборка + дым-тест
-└── Install-skill.bat       — обёртка setup.ps1 для двойного щелчка
+└── tests/                  — сквозные тесты (python tests\test_*.py <схема>)
 ```
+
+| Модуль | Что в нём |
+|---|---|
+| `pkit.env` | пути P-CAD, сборка DbxHost, рабочие папки, `utf8_console` |
+| `pkit.dbx` | `open_design` (пакетный), `open_live` (живой), `Session`, `Host`, `DbxError` |
+| `pkit.sch` | `dump`, `dump_live`, `Schematic` (comps, nets, bom, pin_nets) |
+| `pkit.verify` | `Report` — накопитель проверок |
+| `tools/dbx-host` | DbxHost.exe — x86-хост DBX с JSON-протоколом stdin/stdout |
 
 ## Как это устроено
 
@@ -22,7 +30,7 @@ Pcad-Kit/
 `DbxHost.exe` (собирается штатным `csc.exe` .NET Framework 4), а Python
 (любой разрядности) говорит с ним JSON-строками через stdin/stdout.
 
-Два режима:
+Два режима (`knowledge/20_ПРИЁМЫ/20-02`):
 
 * **пакетный** — `pk.dump(path)`: копия в `Temp\pkit`, свой Sch.exe,
   выгрузка, процесс погашен; оригинал не трогается (проверено по mtime);
@@ -32,40 +40,45 @@ Pcad-Kit/
 ## Быстрый старт
 
 ```python
-import os, sys
-sys.path.insert(0, os.environ["PKIT_HOME"])
+import sys
+sys.path.insert(0, r"<папка скиллов>\pcad")
 import pkit as pk
 
 pk.utf8_console()
 s = pk.dump(r"D:\проект\схема.SCH")
-print(s)                    # 205 компонентов, 206 цепей
+print(s)                    # число компонентов и цепей
 print(s.bom())              # перечень элементов
 print(s.pin_nets())         # {(refdes, pindes): netname}
 ```
 
-## Установка на новой машине
+## Установка
 
-`git clone` → двойной щелчок по `Install-skill.bat` (или
-`powershell -ExecutionPolicy Bypass -File tools\setup.ps1`). Требования:
-P-CAD 2002, Python 3.11+, .NET Framework 4 (есть в Windows из коробки).
+```bash
+git clone https://github.com/RungeKut/Pcad-Skill.git "<папка скиллов агента>/pcad"
+```
+
+Рядом нужен скилл skill-skill (общие правила, проверки, хук). Настройка
+клона — skill-skill, `knowledge/40_СРЕДА/40-01`; зависимости набора
+(P-CAD 2002, Python 3.11+, .NET Framework 4 из коробки Windows) и сборка
+`DbxHost.exe` — `knowledge/40_СРЕДА/40-01` здесь.
 
 ## Что проверено
 
 2026-10-07, P-CAD 2002 V17.01.22, Python 3.14 x64: полная выгрузка
-реальной схемы (205 компонентов, 206 цепей, выводы, атрибуты с кириллицей,
-узлы цепей) в пакетном и живом режиме — `tests/test_dump.py`, 11 проверок.
+реальной схемы (компоненты, цепи, выводы, атрибуты с кириллицей, узлы
+цепей) в пакетном и живом режиме — `tests/test_dump.py`.
 Правка (TModify*/TPlace*) в pkit пока не выносилась — API разобран,
 реализация по мере надобности. Записи без `verified` силы не имеют —
 см. `knowledge/00_ПРАВИЛА.md`.
 
 ## Работа с репозиторием
 
-В начале — `git pull --rebase`; после каждой правки набора — `git diff`
-глазами, коммит, `git push`. Без права записи правка уходит pull
-request'ом из своего форка; владелец разбирает открытые PR при каждом
-pull (`gh pr list`). **В набор не попадает ничего о проектируемом
-изделии** — ни в файлы, ни в текст коммита. Порядок —
-`knowledge/40_СРЕДА/40-02`.
+По общим правилам — соседний скилл skill-skill, 40-02: в начале
+`git pull --rebase`, после правки `git diff` глазами,
+`python tools/check_docs.py`, коммит, push сразу; без права записи — PR
+из форка, сливает владелец. **В набор не попадает ничего о
+проектируемом изделии** — ни в файлы, ни в текст коммита
+(`knowledge/40_СРЕДА/40-02`).
 
 ## Лицензия
 
