@@ -43,7 +43,10 @@ def host_exe(build_if_missing=True):
         if not build_if_missing:
             raise RuntimeError("DbxHost.exe не собран: %s" % exe)
         bat = os.path.join(kit_root(), "tools", "dbx-host", "build.bat")
-        r = subprocess.run([bat], capture_output=True, text=True)
+        # errors="replace": при PYTHONUTF8=1 текстовый режим декодирует
+        # cp866-вывод как UTF-8 и падает (30-07)
+        r = subprocess.run([bat], capture_output=True, text=True,
+                           errors="replace")
         if r.returncode != 0 or not os.path.isfile(exe):
             raise RuntimeError("сборка DbxHost не удалась:\n%s\n%s"
                                % (r.stdout, r.stderr))
@@ -51,9 +54,13 @@ def host_exe(build_if_missing=True):
 
 
 def sch_running():
-    """True, если хотя бы один Sch.exe уже запущен (чужой или наш)."""
+    """True, если хотя бы один Sch.exe уже запущен (чужой или наш).
+
+    errors="replace": при PYTHONUTF8=1 текстовый режим декодирует
+    cp866-вывод tasklist как UTF-8 и падает на кириллице (30-07)."""
     out = subprocess.run(["tasklist", "/FI", "IMAGENAME eq Sch.exe", "/NH"],
-                         capture_output=True, text=True).stdout
+                         capture_output=True, text=True,
+                         errors="replace").stdout
     return "Sch.exe" in out
 
 

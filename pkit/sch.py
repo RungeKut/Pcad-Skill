@@ -9,6 +9,7 @@
 Координаты в сырых данных — database units: 100000 на мм, 2540 на mil
 (DbxUtils.h). Schematic.to_mm() переводит.
 """
+import time
 from collections import OrderedDict
 
 from . import dbx
@@ -100,8 +101,13 @@ class Schematic(object):
 
 def dump(path, wait=90):
     """Полная выгрузка схемы с копии: компоненты с выводами и атрибутами,
-    цепи с узлами. Оригинал не открывается и не меняется."""
+    цепи с узлами. Оригинал не открывается и не меняется.
+
+    DDE отвечает раньше, чем Sch.exe загрузит файл (30-06), поэтому перед
+    сбором ждём загрузку: непустой designName и стабильное число
+    компонентов."""
     with dbx.open_design(path, wait=wait) as s:
+        _wait_loaded(s, path, wait)
         return _collect(s, path)
 
 
@@ -109,7 +115,30 @@ def dump_live(wait=30):
     """Выгрузка дизайна, открытого прямо сейчас в запущенном Sch.exe.
     Только чтение: редактор человека не сохраняем и не закрываем."""
     with dbx.open_live(wait=wait) as s:
+        _wait_loaded(s, "<live>", wait)
         return _collect(s, "<live>")
+
+
+def _wait_loaded(s, path, timeout):
+    """Дождаться загрузки файла в редакторе, иначе выгрузка молча даёт
+    пустой info и 0 компонентов на валидной схеме (30-06)."""
+    deadline = time.time() + timeout
+    last = -1
+    stable = 0
+    while time.time() < deadline:
+        if s.info().get("designName"):
+            n = len(s.components()["components"])
+            if n > 0 and n == last:
+                stable += 1
+                if stable >= 2:
+                    return
+            else:
+                stable = 0
+            last = n
+        time.sleep(1.5)
+    raise dbx.DbxError(
+        "дизайн не загрузился за %s c (designName пуст или 0 "
+        "компонентов): %s" % (timeout, path))
 
 
 def _collect(s, path):
